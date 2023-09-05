@@ -1,0 +1,24 @@
+{
+  "name": "neptune-plugins",
+  "description": "Neptune plugins",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "plugins/**"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs --production",
+    "dev": "node scripts/build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "0.19.2"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 120,
+    "arrowParens": "avoid",
+    "useTabs": false,
+    "tabWidth": 2
+  }
+}
