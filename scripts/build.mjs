@@ -38,6 +38,10 @@ async function readJsonFile(p, encoding = 'utf8') {
   }
 }
 
+/**
+ * @param {string} p
+ * @returns {string}
+ */
 const forcePathToUnix = p => (path.win32 === path ? path.posix.format(path.parse(p)) : p)
 
 /**
@@ -67,7 +71,7 @@ for (const ent of await fs.readdir(PLUGINS_DIR, { withFileTypes: true })) {
       name: pkg.displayName || pkg.name,
       description: pkg.description ?? '',
       author: pkg.author ?? '',
-      main: forcePathToUnix(path.relative(pth, ep)),
+      main: forcePathToUnix(path.relative(pth, ep)).replace(/\.ts$/gi, '.js'),
     }
 
     if (typeof manifest.name !== 'string') throw new TypeError(`Missing "displayName" or "name" in package.json`)
