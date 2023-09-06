@@ -20,10 +20,11 @@ jobs:
       - name: Prepare environment
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
 
       - name: Install dependencies
         run: |
+          corepack enable
           corepack prepare pnpm@latest --activate
           pnpm i
 
@@ -35,8 +36,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist
-          # https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site
-          # This creates the CNAME file required to host github pages on a custom domain
-          # Remove this to use default [username].github.io domain
-          # Reminder: using a free domain service like freenom *can* result in your users getting hacked
           #cname: example.com
