@@ -11,6 +11,15 @@ importers:
       esbuild:
         specifier: 0.19.2
         version: 0.19.2
+      idb-keyval:
+        specifier: ^6.2.1
+        version: 6.2.1
+      spitroast:
+        specifier: ^1.4.3
+        version: 1.4.3
+      voby:
+        specifier: ^0.54.0
+        version: 0.54.0
 
   plugins/VolumeScroll: {}
 
@@ -242,4 +251,27 @@ packages:
       '@esbuild/win32-arm64': 0.19.2
       '@esbuild/win32-ia32': 0.19.2
       '@esbuild/win32-x64': 0.19.2
+    dev: true
+
+  /htm@3.1.1:
+    resolution: {integrity: sha512-983Vyg8NwUE7JkZ6NmOqpCZ+sh1bKv2iYTlUkzlWmA5JD2acKoxd4KVxbMmxX/85mtfdnDmTFoNKcg5DGAvxNQ==}
+    dev: true
+
+  /idb-keyval@6.2.1:
+    resolution: {integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==}
+    dev: true
+
+  /oby@14.3.1:
+    resolution: {integrity: sha512-/5BvIarE2epsV2DDjcBf6R7DvcoUqtU62AOEEQyUqaKzwz0kdpB6huOG8anaqU0Asa9UGPFxdQWVbUPpEGLkuw==}
+    dev: true
+
+  /spitroast@1.4.3:
+    resolution: {integrity: sha512-JdkzAy2tT82ahx+eEtM5ohBeHICqFln/Yzo+vPGnE5sX1LYgPHCU2qcaSIJfR/xNrhI0q+ftwFz0H2aJysv3EA==}
+    dev: true
+
+  /voby@0.54.0:
+    resolution: {integrity: sha512-hH8LXcP0QR4J6nnzfSWGD13onq7hqdc/ya1r1Bb+TxibtECYKZRO1m4HdSU4RcE7MdAaQwR5pwgd+hqXCqk2OA==}
+    dependencies:
+      htm: 3.1.1
+      oby: 14.3.1
     dev: true
