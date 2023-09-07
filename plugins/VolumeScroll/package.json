@@ -1,0 +1,9 @@
+{
+  "name": "neptune-plugin-volume-scroll",
+  "displayName": "Volume Scroll",
+  "description": "Change volume by scrolling on the icon",
+  "version": "0.0.0",
+  "author": "relative <hi@relative.im>",
+  "private": true,
+  "main": "src/index.ts"
+}
