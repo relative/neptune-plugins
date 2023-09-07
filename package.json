@@ -13,6 +13,7 @@
   "devDependencies": {
     "esbuild": "0.19.2",
     "idb-keyval": "^6.2.1",
+    "redux": "^4.2.1",
     "spitroast": "^1.4.3",
     "voby": "^0.54.0"
   },

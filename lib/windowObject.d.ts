@@ -9,6 +9,9 @@ import type { observe } from './api/observe'
 import type { registerRoute } from './api/registerRoute'
 import type { registerTab } from './api/registerTab'
 import type { showModal } from './api/showModal'
+import type { Store } from 'redux'
+
+const store: Store
 
 export interface NeptuneObject {
   patcher: typeof patcher
@@ -22,6 +25,7 @@ export interface NeptuneObject {
   voby: typeof voby
   plugins: typeof plugins
   components: typeof components
+  store: typeof store
 }
 export {
   patcher,
@@ -35,4 +39,5 @@ export {
   voby,
   plugins,
   components,
+  store,
 }
