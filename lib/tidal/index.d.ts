@@ -14,6 +14,12 @@ declare const authType: {
 	ANONYMOUS: "ANONYMOUS";
 	AUTHENTICATED: "AUTHENTICATED";
 };
+export type ExperimentationPlatformState = {
+	readonly activeExperiments: ActiveExperiments;
+	readonly anonymousExperiments?: GetExperimentsResponse<DefaultUserAttributes>["experimentResponses"];
+	readonly authenticatedExperiments?: GetExperimentsResponse<DefaultUserAttributes>["experimentResponses"];
+	readonly experimentKeys: Record<string, string>;
+};
 declare const albumReview: z.ZodObject<{
 	source: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 	text: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -62175,16 +62181,6 @@ declare namespace content {
 	type PlaylistType = z.infer<typeof playlistType>;
 	type Playlist = z.infer<typeof playlist>;
 }
-export type RemotePlayerStates = "BUFFERING" | "IDLE" | "PAUSED" | "PLAYING";
-export type DeviceType = "chromeCast" | "tidalConnect";
-export type Device = {
-	addresses: Array<string>;
-	friendlyName: string;
-	fullname: string;
-	id: string;
-	port: number;
-	type: DeviceType;
-};
 export type AudioMode = unknown;
 export type AudioQuality = unknown;
 export type OutputDevice = unknown;
@@ -62192,6 +62188,12 @@ export type PlaybackContext = unknown;
 export type StreamType = unknown;
 export type DeviceMode = unknown;
 export type BoomboxError = unknown;
+export type State = {
+	readonly lastPlayingTimestamp: number | null;
+	readonly playbackState: PlaybackState;
+	readonly productId: string | null;
+	readonly storedTimes: Record<string, number>;
+};
 export type Album = Merge<Api.content.Album, {
 	readonly contentType: "album";
 }>;
@@ -62219,6 +62221,28 @@ export type ArtistContribution = {
 	readonly trackId: ItemId;
 };
 export type ArtistContributions = ReadonlyArray<ArtistContribution>;
+export type TrackItem = Api.content.TrackItem & {
+	readonly contentType: "track";
+};
+export type Track = Omit<Api.content.Track, "credits" | "item"> & {
+	readonly credits?: Credits;
+	readonly item: TrackItem;
+};
+export type TrackWithRoles = Track & {
+	roles: Array<Api.content.TrackRole>;
+};
+export type VideoItem = Api.content.VideoItem & {
+	readonly contentType: "video";
+	readonly credits?: Credits;
+};
+export type Video = Omit<Api.content.Video, "item"> & {
+	readonly item: VideoItem;
+};
+export type MediaItem = Track | Video;
+export type Mix = Api.content.Mix & {
+	readonly contentType: "mix";
+	readonly id: ItemId;
+};
 export type PlaylistSource = "AI" | "DEFAULT" | "PLAYLIST_IMPORTER";
 export type PlaylistStatus = "FAILED" | "NOT_READY" | "READY";
 export type Playlist = Api.content.Playlist & {
@@ -62246,11 +62270,14 @@ export type FolderPlaylist = Api.content.FolderPlaylist & {
 export type FolderItem = Folder | FolderPlaylist;
 export type FolderItemList = im.List<FolderItem>;
 export type PlaylistDataList = im.List<Playlist>;
+export type FoldersState = im.List<FolderItem>;
+export type ItemId = number | string;
+export type ItemUuid = string;
+export type ItemArtist = Api.common.ItemArtist;
+export type ItemArtists = ReadonlyArray<ItemArtist>;
+export type ContentItem = Album | Article | Artist | FolderData | FolderPlaylistData | Mix | Playlist | TrackItem | VideoItem;
+export type ResponseContentItem = Api.content.Album | Api.content.Article | Api.content.ArtistLegacy | Api.content.Mix | Api.content.Playlist | Api.content.TrackItem | Api.content.VideoItem;
 export type PlaylistFan = unknown;
-export type Mix = Api.content.Mix & {
-	readonly contentType: "mix";
-	readonly id: ItemId;
-};
 export type DynamicPageUnknownModuleFields = {
 	moduleType: string;
 	type: "UNKNOWN";
@@ -62550,8 +62577,34 @@ export type Credit = {
 	type: string;
 };
 export type Credits = Array<Credit>;
+export type LyricsStatus = "loaded" | "loading" | "missing" | "unfetched";
+export type ItemLyrics = Readonly<{
+	cues?: Array<number>;
+	endOfStanza?: Array<boolean>;
+	isRightToLeft: boolean;
+	lines?: Array<string>;
+	lyricsProvider?: string;
+	providerCommontrackId?: string;
+	providerLyricsId?: string;
+	providerProductType?: "lyrics" | "subtitle";
+	status: LyricsStatus;
+}>;
 export type SortOrder = "ALBUM" | "ARTIST" | "DATE_UPDATED" | "DATE" | "INDEX" | "LENGTH" | "MIX_TYPE" | "NAME" | "POPULARITY" | "RELEASE_DATE";
 export type SortDirection = "ASC" | "DESC";
+export type MixedTypesListItemFields = {
+	itemId: ItemId;
+	itemType: "album" | "artist" | "folder" | "mix" | "playlist" | "track" | "video";
+};
+export type MixedTypesListItem = RecordOf<MixedTypesListItemFields>;
+export type SortMixedTypesFields = {
+	cursor?: string | null;
+	error: string | null | undefined;
+	isFullyLoaded: boolean;
+	items: im.OrderedSet<MixedTypesListItem>;
+	loading: boolean;
+	offset: number;
+};
+export type SortMixedTypes = RecordOf<SortMixedTypesFields>;
 export type SortItems = im.List<ItemId>;
 export type SortFields = {
 	cursor?: string | null;
@@ -62594,36 +62647,168 @@ export type TrackListItemsFields = {
 	totalNumberOfItems: number;
 };
 export type TrackListItems = RecordOf<TrackListItemsFields>;
+export type MixedTypesListItemsFields = {
+	currentDirection: SortDirection | null | undefined;
+	currentOrder: SortOrder | null | undefined;
+	dataApiPath: string;
+	sorted: im.Map<string, SortMixedTypes>;
+	totalNumberOfItems: number;
+};
+export type MixedTypesListItems = RecordOf<MixedTypesListItemsFields>;
+export type MixedTypesLists = im.Map<string, MixedTypesListItems>;
+export type TrackLists = im.Map<string, TrackListItems>;
+export type FavoriteFields = {
+	error: string | null | undefined;
+	itemIds: im.Set<ItemId>;
+	loaded: boolean;
+	loading: boolean;
+};
+export type Favorite = RecordOf<FavoriteFields>;
+export type FavoritesFields = {
+	album: Favorite;
+	artist: Favorite;
+	playlist: Favorite;
+	track: Favorite;
+	video: Favorite;
+};
+export type Favorites = RecordOf<FavoritesFields>;
+export type Albums = im.Map<string, Album>;
+export type AlbumCredits = im.Map<string, Credits>;
+export type AlbumReviews = im.Map<string, Api.content.AlbumReview>;
+export type ArtistBios = im.Map<string, Api.content.ArtistBio>;
+export type ArtistContributionsMap = im.Map<string, im.Map<string, ArtistContributions>>;
+export type Artists = im.Map<string, Artist>;
+export type DateAddedMap = im.Map<string, string>;
+export type DateAddedMaps = im.Map<string, DateAddedMap>;
+export type DynamicPages = im.Map<string, DynamicPage>;
+export type Lyrics = im.Map<string, ItemLyrics>;
 export type MediaItems = im.Map<string, MediaItem>;
+export type MediaItemProxies = im.Map<string, string>;
+export type Mixes = im.Map<string, Mix>;
+export type PlaylistFans = im.Map<string, {
+	cursor?: string;
+	fans: Array<PlaylistFan>;
+}>;
+export type Playlists = im.Map<string, Playlist>;
+export type Folders = im.Map<string, Folder>;
+export type TrackContributors = im.Map<string, Credits>;
+export type TrackMixIds = im.Map<string, string>;
+export type VideoContributors = im.Map<string, Credits>;
+export type Articles = im.Map<string, Article>;
 export type PlaylistMeta = Readonly<{
 	description: string;
 	folderId?: string | null;
 	title: string;
 }>;
-export type TrackItem = Api.content.TrackItem & {
-	readonly contentType: "track";
+export type ContentStateFields = {
+	albumCredits: AlbumCredits;
+	albumLists: TrackLists;
+	albumReviews: AlbumReviews;
+	albums: Albums;
+	articleLists: TrackLists;
+	articles: Articles;
+	artistBios: ArtistBios;
+	artistContributions: ArtistContributionsMap;
+	artistLists: TrackLists;
+	artistRoleCategories: im.Map<string, ArtistRoleCategories>;
+	artists: Artists;
+	dateAddedMaps: DateAddedMaps;
+	dynamicPages: DynamicPages;
+	favorites: Favorites;
+	folders: Folders;
+	lyrics: Lyrics;
+	mediaItemProxies: MediaItemProxies;
+	mediaItems: MediaItems;
+	mixLists: TrackLists;
+	mixedTypesLists: MixedTypesLists;
+	mixes: Mixes;
+	playlistFans: PlaylistFans;
+	playlistLists: TrackLists;
+	playlists: Playlists;
+	trackContributors: TrackContributors;
+	trackLists: TrackLists;
+	trackMixIds: TrackMixIds;
+	videoContributors: VideoContributors;
 };
-export type Track = Omit<Api.content.Track, "credits" | "item"> & {
-	readonly credits?: Credits;
-	readonly item: TrackItem;
+export type ContentState = RecordOf<ContentStateFields>;
+export type Sort = {
+	cursor?: string | null;
+	error?: string;
+	isFullyLoaded?: boolean;
+	items: Array<string>;
+	loading?: boolean;
 };
-export type TrackWithRoles = Track & {
-	roles: Array<Api.content.TrackRole>;
+export type ItemsFields = {
+	currentDirection: SortDirection;
+	currentOrder: SortOrder;
+	sorted: Record<string, Sort>;
+	totalNumberOfItems: number;
 };
-export type VideoItem = Api.content.VideoItem & {
-	readonly contentType: "video";
-	readonly credits?: Credits;
+export type ArtistsState = {
+	artists: Record<string, any>;
+	folders: Record<string, any>;
+	lists: Record<string, ItemsFields>;
 };
-export type Video = Omit<Api.content.Video, "item"> & {
-	readonly item: VideoItem;
+export type BlockedUserItem = {
+	color: Array<string>;
+	name: string;
+	picture: {
+		url: string;
+	} | null;
+	userId: ItemId;
 };
-export type MediaItem = Track | Video;
-export type ItemId = number | string;
-export type ItemUuid = string;
-export type ItemArtist = Api.common.ItemArtist;
-export type ItemArtists = ReadonlyArray<ItemArtist>;
-export type ContentItem = Album | Article | Artist | FolderData | FolderPlaylistData | Mix | Playlist | TrackItem | VideoItem;
-export type ResponseContentItem = Api.content.Album | Api.content.Article | Api.content.ArtistLegacy | Api.content.Mix | Api.content.Playlist | Api.content.TrackItem | Api.content.VideoItem;
+export type BlockedUser = {
+	item: BlockedUserItem;
+	type: "USER";
+};
+export type ItemType = "artist" | "track" | "user" | "video";
+export type ListType = "artists" | "tracks" | "users" | "videos";
+export type ItemToBlock = {
+	readonly context: MediaCollectionContext;
+	readonly id: ItemId;
+	readonly itemType: ItemType;
+};
+export type PersistentListCommon = {
+	readonly isLoading: boolean;
+	readonly offset: number;
+	readonly totalNumberOfItems: number;
+};
+export type PersistentArtistList = PersistentListCommon & {
+	readonly items: ReadonlyArray<BlockedArtist>;
+};
+export type PersistentTrackList = PersistentListCommon & {
+	readonly items: ReadonlyArray<Track>;
+};
+export type PersistentVideoList = PersistentListCommon & {
+	readonly items: ReadonlyArray<Video>;
+};
+export type PersistentUserList = PersistentListCommon & {
+	readonly items: ReadonlyArray<BlockedUser>;
+};
+export type BlockedState = {
+	readonly artists: ReadonlyArray<ItemId>;
+	readonly artistsPersistent: PersistentArtistList;
+	readonly etag: string;
+	readonly itemToBlock: ItemToBlock | null | undefined;
+	readonly tracks: ReadonlyArray<ItemId>;
+	readonly tracksPersistent: PersistentTrackList;
+	readonly users: ReadonlyArray<ItemId>;
+	readonly usersPersistent: PersistentUserList;
+	readonly videos: ReadonlyArray<ItemId>;
+	readonly videosPersistent: PersistentVideoList;
+};
+declare enum NativePlayerDeviceMode {
+}
+export type State = {
+	activeDeviceId: string;
+	activeDeviceMode: NativePlayerDeviceMode;
+	activeDevicePassThrough: boolean;
+	availableDevices: Array<OutputDevice>;
+	desiredDeviceMode: Record<string, NativePlayerDeviceMode>;
+	desiredPassThrough: Record<string, boolean>;
+	forceVolume: Record<string, boolean>;
+	hasPreloadedNextProduct: boolean;
+};
 export type PlayQueuePriority = "priority_history" | "priority_keep" | "priority_none";
 export type PlayQueueSourceType = "active" | "album" | "artist" | "credits" | "FEED" | "mix" | "MY_TRACKS" | "MY_VIDEOS" | "playlist" | "search" | "suggestedItemsForPlaylist" | "suggestions" | "trackList" | "UNKNOWN" | "user";
 export type PlayQueueContext = {
@@ -62638,129 +62823,26 @@ export type PlayQueueItem = {
 	uid: string;
 };
 export type RepeatMode = 0 | 1 | 2;
-export type ApiErrorMessage = {
-	apiError: {
-		subStatus: number;
-	};
+export type PlayQueueType = "cloud" | "local";
+export type PlayQueue = {
+	backupElements: ReadonlyArray<PlayQueueItem>;
+	backupSource: ReadonlyArray<PlayQueueItem>;
+	currentIndex: number;
+	elements: ReadonlyArray<PlayQueueItem>;
+	lastShuffleSeed?: number;
+	originalSource: ReadonlyArray<PlayQueueItem>;
+	repeatMode: RepeatMode;
+	shuffleModeEnabled: boolean;
+	sourceEntityId?: ItemId;
+	sourceEntityType?: string;
+	sourceLimit?: number;
+	sourceName?: string;
+	sourceTrackListName?: string;
+	sourceUrl?: string;
+	stateBeforeRepeatInterruption?: PlayQueue;
+	type: PlayQueueType;
+	uniqueIdCounter: number;
 };
-export type TimeUpdateMessage = {
-	type: "TIME_UPDATE";
-};
-export type RepeatModeMessage = {
-	repeat: "ALL" | "OFF" | "SINGLE";
-};
-export type QualityMessage = {
-	quality: string;
-};
-export type CustomMessage = ApiErrorMessage | QualityMessage | RepeatModeMessage | TimeUpdateMessage;
-export type ArtistCategoryResponse = {
-	readonly category: {
-		readonly id: number;
-		readonly name: string;
-	};
-	readonly pagedList: {
-		readonly items: ReadonlyArray<Api.content.ArtistLegacy>;
-	};
-};
-export type ArtistCategoriesResponse = ReadonlyArray<ArtistCategoryResponse>;
-export type SelectedArtistTrackingData = {
-	readonly contentId: ItemId;
-	readonly contentPlacement: number;
-	readonly contentSource: "originalContent" | "searchContent" | "showMore" | "similarContent";
-	readonly contentType: "artist";
-	readonly moduleId: string;
-	readonly placement: number;
-	readonly searchQuery?: string;
-	readonly ts: number;
-};
-export type AutoStartMode = 0 | 1;
-export type LanguageId = "bg-bg" | "da-dk" | "de-de" | "en-us" | "es-es" | "fr-fr" | "hr-hr" | "it-it" | "nb-no" | "pl-pl" | "pt-br" | "pt-pt" | "sl-sl" | "sr-Latn" | "sv-se" | "tr-tr";
-export type I18n = Readonly<typeof usBundle>;
-export type Bundle = {
-	i18n: I18n;
-	name: string;
-};
-export type UserProfileData = unknown;
-export type RecentSearch = {
-	readonly created: number;
-	readonly id: string;
-	readonly kind: "albums" | "artists" | "genres" | "playlists" | "search" | "tracks" | "userProfiles" | "videos";
-	readonly text: string;
-};
-export type SearchResultType = RecentSearch["kind"];
-export type ResponseTopHitArtist = {
-	readonly artistRoles?: Api.content.ArtistRoles;
-	readonly type: "ARTISTS";
-	readonly value: Api.content.ArtistLegacy;
-};
-export type ResponseTopHitAlbum = {
-	readonly type: "ALBUMS";
-	readonly value: Api.content.Album;
-};
-export type ResponseTopHitPlaylist = {
-	readonly type: "PLAYLISTS";
-	readonly value: Api.content.Playlist;
-};
-export type ResponseTopHitTrack = {
-	readonly type: "TRACKS";
-	readonly value: Api.content.TrackItem;
-};
-export type ResponseTopHitVideo = {
-	readonly type: "VIDEOS";
-	readonly value: Api.content.VideoItem;
-};
-export type ResponseTopHitUserProfile = {
-	readonly type: "USERPROFILES";
-	readonly value: any;
-};
-export type ResponseTopHit = ResponseTopHitAlbum | ResponseTopHitArtist | ResponseTopHitPlaylist | ResponseTopHitTrack | ResponseTopHitUserProfile | ResponseTopHitVideo;
-export type ResponseTopHits = ReadonlyArray<ResponseTopHit>;
-export type TopHit = {
-	readonly artistRoles?: ArtistRoleCategories | null;
-	readonly id: ItemId;
-	readonly type: "artists";
-} | {
-	readonly id: ItemId;
-	readonly type: "albums" | "tracks" | "videos";
-} | {
-	readonly type: "playlists";
-	readonly uuid: ItemId;
-};
-export type TopHits = ReadonlyArray<TopHit>;
-export type GenreSearchItem = {
-	readonly apiPath: string;
-	readonly title: string;
-};
-export type GenreSearchResult = ReadonlyArray<GenreSearchItem>;
-export type PagedSearchResult<T> = {
-	readonly items: Array<T>;
-	readonly limit: number;
-	readonly offset: number;
-	readonly totalNumberOfItems: number;
-};
-export type SearchResultPayload = {
-	readonly albums: PagedSearchResult<Api.content.Album>;
-	readonly artists: PagedSearchResult<Api.content.ArtistLegacy>;
-	readonly genres: GenreSearchResult;
-	readonly playlists: PagedSearchResult<Api.content.Playlist>;
-	readonly topHits: ResponseTopHits;
-	readonly tracks: PagedSearchResult<Api.content.TrackItem>;
-	readonly userProfiles: {
-		items: Array<UserProfileData>;
-		limit: number;
-		totalNumberOfItems: number;
-	};
-	readonly videos: PagedSearchResult<Api.content.VideoItem>;
-};
-export type ItemType = "artist" | "track" | "user" | "video";
-export type ListType = "artists" | "tracks" | "users" | "videos";
-export type ItemToBlock = {
-	readonly context: MediaCollectionContext;
-	readonly id: ItemId;
-	readonly itemType: ItemType;
-};
-declare enum NativePlayerDeviceMode {
-}
 export type CloudQueueAddItemMode = "append" | "prepend";
 export type CloudQueueItem = {
 	id: string;
@@ -62777,6 +62859,20 @@ export type CloudQueueRepeatMode = "all" | "off" | "one";
 export type CloudQueueProperties = {
 	position: string;
 } | null | undefined;
+export type CloudQueueState = {
+	currentItemId: string;
+	etag: string;
+	firstItem: CloudQueueItem | undefined;
+	headPosition: number;
+	historyMediaItemIds: ReadonlyArray<ItemId>;
+	itemsEtag: string;
+	properties: CloudQueueProperties;
+	queueId: string;
+	repeatMode: CloudQueueRepeatMode;
+	shuffled: boolean;
+	tailItemId: string;
+	tailPosition: number;
+};
 export type X = number;
 export type Y = number;
 export type XYPos = [
@@ -62838,6 +62934,13 @@ export type TrackPromptContextMenu = Readonly<Omit<CommonContextMenu, "type"> & 
 	type: "ALBUM_PROMPT" | "ARTIST_PROMPT" | "TRACK_PROMPT";
 	userId: ItemId;
 }>;
+export type ContextMenu = BlockItemContextMenu | CommonContextMenu | CommonContextMenuWithId | CommonContextMenuWithTrn | EmptyFolderContextMenu | InputFieldClipboardContextMenu | MediaItemContextMenu | MultiMediaItemContextMenu | TrackPromptContextMenu;
+export type ContextMenuState = Readonly<{
+	current: ContextMenu | null | undefined;
+	lastUpdated?: number;
+	moduleId?: string;
+}>;
+export type EtagState = Readonly<Record<string, string>>;
 export type FavoritesState = {
 	readonly albums: ReadonlyArray<ItemId>;
 	readonly artists: ReadonlyArray<ItemId>;
@@ -62882,9 +62985,55 @@ export type FlagRequestsValue = {
 	userAttributes?: UserAttributes;
 };
 export type FlagRequests = Record<string, FlagRequestsValue>;
+export type FeatureFlagsState = {
+	readonly flagRequests: FlagRequests;
+	readonly flags: Record<Flag["name"], Flag>;
+};
+declare const TimePeriod: readonly [
+	"t-new-updates",
+	"t-today",
+	"t-this-week",
+	"t-last-week",
+	"t-this-month",
+	"t-last-month",
+	"t-older"
+];
+export type TimePeriodKey = (typeof TimePeriod)[number];
+export type FeedItemType = Extract<ItemType, "album" | "folderPlaylist" | "mix" | "playlist">;
+export type FeedState = {
+	readonly hasNewFeedItems: boolean;
+	readonly status: "" | "failed" | "loaded" | "loading";
+	readonly updates: ReadonlyArray<[
+		TimePeriodKey,
+		ReadonlyArray<{
+			itemId: ItemId;
+			itemType: FeedItemType;
+		}>
+	]>;
+};
 export type InterruptionTrigger = "fourthTrack" | "streamRepeat" | "timeLimit";
 export type Interruption = Api.policy.Interruption & {
 	trigger: InterruptionTrigger;
+};
+export type InterruptionsState = {
+	readonly activePlayCount: number;
+	readonly interruptionsQueue: ReadonlyArray<Interruption>;
+	readonly isInInterruptionsMode: boolean;
+	readonly previousSource: string | undefined;
+	readonly uninterruptedTimePlayed: number;
+};
+export type LanguageId = "bg-bg" | "da-dk" | "de-de" | "en-us" | "es-es" | "fr-fr" | "hr-hr" | "it-it" | "nb-no" | "pl-pl" | "pt-br" | "pt-pt" | "sl-sl" | "sr-Latn" | "sv-se" | "tr-tr";
+export type I18n = Readonly<typeof usBundle>;
+export type Bundle = {
+	i18n: I18n;
+	name: string;
+};
+export type Bundles = {
+	[k in LanguageId]?: Bundle;
+};
+export type LocaleState = {
+	bundles: Bundles;
+	currentBundleName: LanguageId;
 };
 declare const premiumOnlyFeatures: readonly [
 	"ADD_TO_QUEUE",
@@ -62922,6 +63071,11 @@ declare const initialState: {
 export type PolicyState = typeof initialState;
 export type Gender = "f" | "m" | "o";
 export type OnboardingStepName = "ADD_TO_FAVORITES" | "ADD_TO_OFFLINE" | "ADD_TO_PLAYLIST" | "ALBUM_INFO" | "ARTIST_CREDITS" | "ARTIST_PICKER" | "BLOCK" | "BOTTOM_NAVIGATION_INTRO" | "CAST" | "CAST2" | "CONTRIBUTOR" | "DOLBY_ATMOS" | "LYRICS" | "MENU_MY_MUSIC" | "MENU_OFFLINE_CONTENT" | "migrated" | "OPTIONS_MENU" | "PLAY_QUEUE_BUTTON" | "PLAY_QUEUE_SUGGESTIONS" | "PLAY_QUEUE" | "RELOCATION_SETTINGS" | "SETTINGS" | "SPRINT_REDESIGN_UPDATE" | "USER_PROFILE_ONBOARDED" | "WEB_3.0.0_UPDATE";
+export type Onboarding = {
+	error: any;
+	loaded: boolean;
+	stepsShown: ReadonlyArray<OnboardingStepName>;
+};
 export type Meta = {
 	acceptedEULA: boolean;
 	countryCode: string;
@@ -62968,6 +63122,16 @@ export type Client = {
 	name: string;
 	uniqueKey: string;
 };
+export type UserState = {
+	clients: ReadonlyArray<Client>;
+	error: any;
+	isLoaded: boolean;
+	isLoading: boolean;
+	meta: Meta;
+	onboarding: Onboarding;
+	subscription: Subscription;
+	temporaryDisableArtistPicker: boolean;
+};
 export type CreateNewFolderActions = "add" | "move" | "contextMenu";
 export type CreateNewPlaylistActions = "add" | "move" | "contextMenu";
 export type MoveFolderItemsActions = "add" | "move" | "contextMenu";
@@ -62998,6 +63162,16 @@ export interface ChangeStreamQualityPayload {
 export interface AdInterruptionsPayload {
 }
 export type ButtonId = string;
+export type LogoutModal = Readonly<{
+	type: "LOGOUT";
+}>;
+export type ConfirmExitModal = Readonly<{
+	type: "CONFIRM_EXIT";
+}>;
+export type ArtistBioModal = Readonly<{
+	artistId: ItemId;
+	type: "ARTIST_BIO";
+}>;
 export type UnblockItem = {
 	id: ItemId;
 	itemTitle: string;
@@ -63016,6 +63190,14 @@ export type ConfirmModal = Readonly<{
 	mode: "addMediaItemsToPlaylist" | "addPlaylistToIndex" | "deleteFolder" | "deletePlaylist" | "deleteProfilePicture" | "togglePublicPlaylist" | "unblockItem";
 	type: "CONFIRM";
 	value: ItemId;
+}>;
+export type DeviceDetectedModal = Readonly<{
+	deviceId: string;
+	type: "DEVICE_DETECTED";
+}>;
+export type OutputDeviceSettingsModal = Readonly<{
+	deviceId: string;
+	type: "DEVICE_SETTINGS";
 }>;
 export type CreatePlaylistModal = Readonly<{
 	action: CreateNewPlaylistActions;
@@ -63049,6 +63231,29 @@ export type FolderModal = Readonly<{
 	trns?: Array<ItemId>;
 	type: "FOLDER";
 }>;
+export type EditPlaylistMetaModal = Readonly<{
+	mode: "edit";
+	playlistUUID: ItemId;
+	type: "EDIT_PLAYLIST_META";
+}>;
+export type RestrictedAccessModal = Readonly<{
+	type: "RESTRICTED_ACCESS";
+}>;
+export type OnboardingModal = Readonly<{
+	step: OnboardingStepName;
+	type: "ONBOARDING";
+}>;
+export type PlaylistInfoModal = Readonly<{
+	type: "PLAYLIST_INFO";
+	uuid: ItemId;
+}>;
+export type IntroUpgradeModal = Readonly<{
+	type: "INTRO_UPGRADE";
+}>;
+export type ArtistsSelectionModal = Readonly<{
+	artists: ItemArtists;
+	type: "ARTISTS";
+}>;
 export type AddMediaItemSpec = Readonly<{
 	contentType: "CONTENT_TYPE_MEDIA_ITEM";
 	mediaItemIdsToAdd: Array<ItemId>;
@@ -63069,6 +63274,73 @@ export type AddToFolderSpec = Readonly<{
 	contentType: "CONTENT_TYPE_FOLDER";
 	folderId: ItemId;
 }>;
+export type AddToPlaylistModal = Readonly<{
+	spec: AddAlbumSpec | AddMediaItemSpec | AddMixSpec | AddPlaylistSpec;
+	type: "ADD_TO_PLAYLIST";
+}>;
+export type AddToFolderModal = Readonly<{
+	spec: AddPlaylistSpec;
+	type: "ADD_TO_FOLDER";
+}>;
+export type AddMultipleItemsToFolderModal = Readonly<{
+	spec: AddToFolderSpec;
+	type: "ADD_MULTIPLE_ITEMS_TO_FOLDER";
+}>;
+export type ReleaseNotes = Readonly<{
+	type: "RELEASE_NOTES";
+}>;
+export type UnsupportedOS = Readonly<{
+	type: "UNSUPPORTED_OS";
+}>;
+export type Shortcuts = Readonly<{
+	type: "SHORTCUTS";
+}>;
+export type DolbyAtmos = Readonly<{
+	type: "DOLBY_ATMOS";
+}>;
+export type UserProfileOnboarding = Readonly<{
+	mode: "onboarding" | "selectPublicPlaylists";
+	type: "USER_PROFILES_ONBOARDING";
+}>;
+export type Upsell = Readonly<{
+	feature: PremiumOnlyFeature | "SKIP";
+	type: "UPSELL";
+}>;
+export type RemoteDesktopDisconnect = Readonly<{
+	type: "REMOTE_DESKTOP_DISCONNECT";
+}>;
+export type ExplicitToggleModal = Readonly<{
+	type: "EXPLICIT_TOGGLE_MODAL";
+}>;
+export type PickTrack = Readonly<{
+	promptId: number;
+	type: "PICK_TRACK";
+	userId: ItemId;
+}>;
+export type PickAlbum = Readonly<{
+	promptId: number;
+	type: "PICK_ALBUM";
+	userId: ItemId;
+}>;
+export type PickArtist = Readonly<{
+	promptId: number;
+	type: "PICK_ARTIST";
+	userId: ItemId;
+}>;
+export type Modal = AddMultipleItemsToFolderModal | AddToFolderModal | AddToPlaylistModal | ArtistBioModal | ArtistsSelectionModal | ConfirmExitModal | ConfirmModal | CreateAiPlaylistModal | CreatePlaylistModal | DeviceDetectedModal | DolbyAtmos | EditPlaylistMetaModal | ExplicitToggleModal | FolderModal | IntroUpgradeModal | LogoutModal | OnboardingModal | OutputDeviceSettingsModal | PickAlbum | PickArtist | PickTrack | PlaylistInfoModal | ReleaseNotes | RemoteDesktopDisconnect | RestrictedAccessModal | Shortcuts | UnsupportedOS | Upsell | UserProfileOnboarding;
+export type ModalState = {
+	readonly currentModal: Modal | null | undefined;
+};
+export type NavigationState = {
+	canNavigateBackward: false;
+	canNavigateForward: false;
+	index: number;
+	stack: Array<string>;
+};
+export type NetworkState = Readonly<{
+	failedStartup: boolean;
+	hasNetworkConnection: boolean;
+}>;
 export type Severity = "DEBUG" | "ERROR" | "INFO" | "WARN";
 export type Data = Record<string, any> | ServiceWorkerRegistration;
 export type Category = "MUTE" | "NETWORK" | "OTHER" | "PLAYBACK";
@@ -63080,13 +63352,148 @@ export type Notification = {
 	severity: Severity;
 };
 export type Message = Partial<Notification> | undefined;
+export type NotificationState = Readonly<{
+	notifications: ReadonlyArray<Notification>;
+}>;
+export type PageState = {
+	readonly isLoading: boolean;
+	readonly pageId: string | null | undefined;
+};
 export type PlaybackState = "IDLE" | "NOT_PLAYING" | "PLAYING" | "STALLED";
+export type DesiredPlaybackState = "NOT_PLAYING" | "PLAYING";
+export type State = {
+	currentVideoQuality: any;
+	desiredPlaybackState: DesiredPlaybackState;
+	latestCurrentTime: number;
+	latestCurrentTimeSyncTimestamp: number;
+	mediaProduct: MediaProduct | null;
+	muted: boolean;
+	nextVideoQuality: any;
+	playbackContext: PlaybackContext | null;
+	playbackState: PlaybackState;
+	startAt: number;
+	videoQualities: any;
+	volume: number;
+	volumeUnmute: number;
+};
+export type PlaybackProgressState = Record<string, number>;
 export type Player = "BOOMBOX" | "GOOGLE_CAST" | "REMOTE_PLAYBACK";
-export type RouterState = unknown;
+export type State = {
+	activePlayer: Player;
+	currentStreamingSessionId: string | null;
+};
+export type UserProfileData = unknown;
+export type RecentSearch = {
+	readonly created: number;
+	readonly id: string;
+	readonly kind: "albums" | "artists" | "genres" | "playlists" | "search" | "tracks" | "userProfiles" | "videos";
+	readonly text: string;
+};
+export type SearchResultType = RecentSearch["kind"];
+export type ResponseTopHitArtist = {
+	readonly artistRoles?: Api.content.ArtistRoles;
+	readonly type: "ARTISTS";
+	readonly value: Api.content.ArtistLegacy;
+};
+export type ResponseTopHitAlbum = {
+	readonly type: "ALBUMS";
+	readonly value: Api.content.Album;
+};
+export type ResponseTopHitPlaylist = {
+	readonly type: "PLAYLISTS";
+	readonly value: Api.content.Playlist;
+};
+export type ResponseTopHitTrack = {
+	readonly type: "TRACKS";
+	readonly value: Api.content.TrackItem;
+};
+export type ResponseTopHitVideo = {
+	readonly type: "VIDEOS";
+	readonly value: Api.content.VideoItem;
+};
+export type ResponseTopHitUserProfile = {
+	readonly type: "USERPROFILES";
+	readonly value: any;
+};
+export type ResponseTopHit = ResponseTopHitAlbum | ResponseTopHitArtist | ResponseTopHitPlaylist | ResponseTopHitTrack | ResponseTopHitUserProfile | ResponseTopHitVideo;
+export type ResponseTopHits = ReadonlyArray<ResponseTopHit>;
+export type TopHit = {
+	readonly artistRoles?: ArtistRoleCategories | null;
+	readonly id: ItemId;
+	readonly type: "artists";
+} | {
+	readonly id: ItemId;
+	readonly type: "albums" | "tracks" | "videos";
+} | {
+	readonly type: "playlists";
+	readonly uuid: ItemId;
+};
+export type TopHits = ReadonlyArray<TopHit>;
+export type GenreSearchItem = {
+	readonly apiPath: string;
+	readonly title: string;
+};
+export type GenreSearchResult = ReadonlyArray<GenreSearchItem>;
+export type SearchState = {
+	readonly genres: Record<string, GenreSearchResult>;
+	readonly isLoading: boolean;
+	readonly recentSearches: ReadonlyArray<RecentSearch>;
+	readonly searchPhrase: string;
+	readonly topHit: Record<string, TopHits>;
+};
+export type PagedSearchResult<T> = {
+	readonly items: Array<T>;
+	readonly limit: number;
+	readonly offset: number;
+	readonly totalNumberOfItems: number;
+};
+export type SearchResultPayload = {
+	readonly albums: PagedSearchResult<Api.content.Album>;
+	readonly artists: PagedSearchResult<Api.content.ArtistLegacy>;
+	readonly genres: GenreSearchResult;
+	readonly playlists: PagedSearchResult<Api.content.Playlist>;
+	readonly topHits: ResponseTopHits;
+	readonly tracks: PagedSearchResult<Api.content.TrackItem>;
+	readonly userProfiles: {
+		items: Array<UserProfileData>;
+		limit: number;
+		totalNumberOfItems: number;
+	};
+	readonly videos: PagedSearchResult<Api.content.VideoItem>;
+};
 export type SelectionItem = CollectionListItem & Readonly<{
 	index?: number;
 }>;
 export type SelectionItems = ReadonlyArray<SelectionItem>;
+export type SelectionState = Readonly<{
+	indices: ReadonlyArray<number>;
+	isDragging: boolean;
+	items: SelectionItems;
+	loadedFolders: ReadonlyArray<string>;
+	openFolders: ReadonlyArray<string>;
+}>;
+export type UTMParameters = {
+	banner?: string;
+	campaign: string;
+	content?: string;
+	medium: string;
+	source: string;
+};
+export type SessionState = {
+	apiToken: string;
+	clientId: number | null | undefined;
+	clientUniqueKey: string | null | undefined;
+	countryCode: string;
+	facebookAccessToken: string | null | undefined;
+	isLoading: boolean;
+	isPolling: boolean;
+	oAuthAccessToken: string | null | undefined;
+	oAuthExpirationDate: number | null | undefined;
+	oAuthRefreshToken: string | null | undefined;
+	userId: number | null | undefined;
+	username: string | null | undefined;
+	utmParameters: UTMParameters;
+};
 export type PartialSessionData = {
 	apiToken: string;
 	clientId?: number | null;
@@ -63098,6 +63505,7 @@ export type PartialSessionData = {
 	userId: number | null | undefined;
 	username?: string | null;
 };
+export type AutoStartMode = 0 | 1;
 export type SettingsQuality = {
 	streaming: AudioQuality;
 };
@@ -63121,6 +63529,11 @@ export type SettingsState = {
 	updateAvailable: boolean;
 	urls: SettingsUrls;
 };
+export type BasePromptState = Readonly<{
+	enabled: boolean;
+	promptSearchValue: string;
+	trackPrompts: Array<BasePrompt>;
+}>;
 export type ArtistPromptData = {
 	name: string;
 	picture: string;
@@ -63179,6 +63592,53 @@ export type PublicPlaylistsInState = Readonly<{
 	cursor: string | null;
 	items: Array<CollectionListItem>;
 }>;
+export type UserProfilesState = Readonly<Record<string, UserProfileInState>>;
+export type RemotePlayerStates = "BUFFERING" | "IDLE" | "PAUSED" | "PLAYING";
+export type DeviceType = "chromeCast" | "tidalConnect";
+export type Device = {
+	addresses: Array<string>;
+	friendlyName: string;
+	fullname: string;
+	id: string;
+	port: number;
+	type: DeviceType;
+};
+export type ApiErrorMessage = {
+	apiError: {
+		subStatus: number;
+	};
+};
+export type TimeUpdateMessage = {
+	type: "TIME_UPDATE";
+};
+export type RepeatModeMessage = {
+	repeat: "ALL" | "OFF" | "SINGLE";
+};
+export type QualityMessage = {
+	quality: string;
+};
+export type CustomMessage = ApiErrorMessage | QualityMessage | RepeatModeMessage | TimeUpdateMessage;
+export type ArtistCategoryResponse = {
+	readonly category: {
+		readonly id: number;
+		readonly name: string;
+	};
+	readonly pagedList: {
+		readonly items: ReadonlyArray<Api.content.ArtistLegacy>;
+	};
+};
+export type ArtistCategoriesResponse = ReadonlyArray<ArtistCategoryResponse>;
+export type SelectedArtistTrackingData = {
+	readonly contentId: ItemId;
+	readonly contentPlacement: number;
+	readonly contentSource: "originalContent" | "searchContent" | "showMore" | "similarContent";
+	readonly contentType: "artist";
+	readonly moduleId: string;
+	readonly placement: number;
+	readonly searchQuery?: string;
+	readonly ts: number;
+};
+export type RouterState = unknown;
 export type SearchResult = [
 	SearchResultType,
 	im.List<ItemId>
@@ -63227,10 +63687,7 @@ export type OwnProps = Readonly<{
 declare const connector: any;
 export type RdxProps = ConnectedProps<typeof connector>;
 export type CombinedProps = Readonly<OwnProps & RdxProps>;
-export type PlayerConfig = unknown;
 export type MediaProduct = unknown;
-export type StreamInfo = unknown;
-export type PlaybackInfo = unknown;
 export interface Location<TResult = {}> {
 	pathname?: string;
 	options?: LocationOptions;
@@ -63337,6 +63794,9 @@ export declare const dataTypes: {
 	readonly json: "JSON";
 	readonly string: "STRING";
 };
+declare namespace Api {
+	export {dp, content};
+}
 declare namespace RemoteDesktop {
 	enum SessionState {
 	}
@@ -63370,8 +63830,6 @@ export type VoiceCommand = {
 	readonly actions: Array<VoiceAction>;
 	readonly rawTranscript: string;
 };
-export type DeviceType = DeviceType;
-export type Device = Device;
 export type DevicesMap = {
 	chromeCast: ReadonlyArray<Device>;
 	tidalConnect: ReadonlyArray<Device>;
@@ -63390,8 +63848,6 @@ export type Session = {
 	transportId: string;
 };
 export type SessionStatus = "nosession" | "resumed" | "started" | "suspended";
-export type AudioMode = AudioMode;
-export type AudioQuality = AudioQuality;
 export type IncomingMediaInfo = {
 	customData: {
 		audioMode: AudioMode;
@@ -63414,7 +63870,6 @@ export type IncomingQueueInfo = {
 	repeatMode: TidalConnect.RepeatMode;
 	shuffled: boolean;
 };
-export type RemotePlayerStates = RemotePlayerStates;
 export type QueueErrorDescription = Readonly<{
 	error: string;
 	status: number;
@@ -63441,11 +63896,6 @@ export type LaunchParams = {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/LaunchQueue/setConsumer#parameters
  */
 export type LastFMMethods = "auth.getSession" | "track.scrobble" | "track.updateNowPlaying";
-export type CustomMessage = CustomMessage;
-export type PlayQueueContext = PlayQueueContext;
-export type ArtistCategoriesResponse = ArtistCategoriesResponse;
-export type ItemId = ItemId;
-export type SelectedArtistTrackingData = SelectedArtistTrackingData;
 export type AddArtistFromSearchPayload = {
 	readonly artist: Api.content.ArtistLegacy;
 	readonly relatedArtists: ReadonlyArray<Api.content.ArtistLegacy>;
@@ -63498,76 +63948,117 @@ export type SelectedArtist = {
 	readonly id: ItemId;
 	readonly trackingData: SelectedArtistTrackingData;
 };
-export type PlaylistSource = PlaylistSource;
-export type PlaylistStatus = PlaylistStatus;
-export type AutoStartMode = AutoStartMode;
-export type I18n = I18n;
-export type LanguageId = LanguageId;
-export type GenreSearchResult = GenreSearchResult;
-export type RecentSearch = RecentSearch;
-export type SearchResultsTypeIds = SearchResultsTypeIds;
-export type TopHits = TopHits;
-export type ResultItem = ResultItem;
-export type FolderData = FolderData;
-export type ItemType = ItemType;
-export type MediaCollectionContext = MediaCollectionContext;
-export type CollectionListItem = CollectionListItem;
 export type Item = {
 	readonly itemId: ItemId;
 	readonly trackNumber: number;
 };
-export type SortDirection = SortDirection;
-export type SortOrder = SortOrder;
-export type ItemUuid = ItemUuid;
 export type MouseEvent = import("react").MouseEvent;
-export type OutputDevice = OutputDevice;
-export type DynamicPage = DynamicPage;
-export type Row = Row;
-export type DynamicPageModule = DynamicPageModule;
-export type MediaItem = MediaItem;
-export type RepeatMode = RepeatMode;
-export type PlayQueueSourceType = PlayQueueSourceType;
 export type ContextMenuLocationContextType = ContextMenuLocationContext;
-export type TrackListItems = TrackListItems;
 export type XYCoord = import("react-dnd").XYCoord;
-export type AddItemToSelection = AddItemToSelection;
-export type PlaylistDataList = PlaylistDataList;
-export type RemoveItemFromSelection = RemoveItemFromSelection;
 export type ConnectDropTarget = import("react-dnd").ConnectDropTarget;
-export type ContentPlacementContextValue = ContentPlacementContextValue;
-export type ModuleContextValue = ModuleContextValue;
 export type AvailableContexts = {
 	contentPlacement: ContentPlacementContextValue;
 	pageModule: ModuleContextValue;
 };
-export type ImageType = ImageType;
-export type CombinedProps = CombinedProps;
 export type ElementalMousePseudos = ":active" | ":focus" | ":hover";
 export type ContentTypesPlural = "albums" | "artists" | "folders" | "playlists" | "tracks" | "videos";
 export type ContentTypesSingular = "album" | "artist" | "folder" | "playlist" | "track" | "video";
 export type ReactNode = import("react").ReactNode;
 export type DragDropManager = import("dnd-core").DragDropManager;
 export type BackendFactory = import("dnd-core").BackendFactory;
-export type PlayerConfig = PlayerConfig;
-export type MediaProduct = MediaProduct;
-export type StreamInfo = StreamInfo;
-export type PlaybackInfo = PlaybackInfo;
 export type MediaErrorCode = "no_such_file" | "file_checksum_mismatch" | "unreadable_file";
 export type VideoQuality = "HIGH" | "MEDIUM" | "LOW" | "AUDIO_ONLY";
 export type SteamType = "ON_DEMAND" | "LIVE";
 export type BlockCallback = (location: HistoryLocation, action?: BlockingActions) => string;
-export type Location = Location;
 export type Dispatch = import("redux").Dispatch;
 export type History = import("history").History;
-export type Query = Query;
-export type LocationOptions = LocationOptions;
 export type BrowserHistoryOptions = import("history").BrowserHistoryOptions;
-export type Href = Href;
-export type ItemArtists = ItemArtists;
-export type RouterState = RouterState;
-export type FollowerData = FollowerData;
-export type UserPlaylistPagedResponse = UserPlaylistPagedResponse;
-export type UserProfileData = UserProfileData;
+export type CoreState = {
+	accumulatedPlaybackTime: {
+		readonly lastPlayingTimestamp: number | null;
+		readonly playbackState: PlaybackState;
+		readonly productId: string | null;
+		readonly storedTimes: Record<string, number>;
+	};
+	artists:  ArtistsState;
+	blocks: BlockedState;
+	boombox:  {
+		activeDeviceId: string;
+		activeDeviceMode: NativePlayerDeviceMode;
+		activeDevicePassThrough: boolean;
+		availableDevices: Array<OutputDevice>;
+		desiredDeviceMode: Record<string, NativePlayerDeviceMode>;
+		desiredPassThrough: Record<string, boolean>;
+		forceVolume: Record<string, boolean>;
+		hasPreloadedNextProduct: boolean;
+	};
+	cloudQueue: CloudQueueState;
+	content: ContentState;
+	contextMenu: ContextMenuState;
+	etag: EtagState;
+	experimentationPlatform: ExperimentationPlatformState;
+	favorites: FavoritesState;
+	featureFlags: FeatureFlagsState;
+	feed: FeedState;
+	folders: FoldersState;
+	interruptions:  InterruptionsState;
+	locale:LocaleState;
+	modal: ModalState;
+	navigation: NavigationState;
+	network: NetworkState;
+	notifications: NotificationState;
+	page: PageState;
+	playQueue: {
+		backupElements: ReadonlyArray<PlayQueueItem>;
+		backupSource: ReadonlyArray<PlayQueueItem>;
+		currentIndex: number;
+		elements: ReadonlyArray<PlayQueueItem>;
+		lastShuffleSeed?: number;
+		originalSource: ReadonlyArray<PlayQueueItem>;
+		repeatMode: RepeatMode;
+		shuffleModeEnabled: boolean;
+		sourceEntityId?: ItemId;
+		sourceEntityType?: string;
+		sourceLimit?: number;
+		sourceName?: string;
+		sourceTrackListName?: string;
+		sourceUrl?: string;
+		stateBeforeRepeatInterruption?: PlayQueue; // we play an interruption between every track in "repeat one" mode
+		type: PlayQueueType;
+		// In order to generate unique ids for the play queue items,
+		// we increment this one for every id to generate.
+		uniqueIdCounter: number;
+	};
+	playbackControls:  {
+		currentVideoQuality: any;
+		desiredPlaybackState: DesiredPlaybackState;
+		latestCurrentTime: number;
+		latestCurrentTimeSyncTimestamp: number;
+		mediaProduct: MediaProduct | null;
+		muted: boolean;
+		nextVideoQuality: any;
+		playbackContext: PlaybackContext | null;
+		playbackState: PlaybackState;
+		startAt: number;
+		videoQualities: any;
+		volume: number;
+		volumeUnmute: number;
+	};
+	playbackProgress: PlaybackProgressState;
+	player: {
+		activePlayer: Player;
+		currentStreamingSessionId: string | null;
+	}k;
+	policy: PolicyState;
+	router?: RouterState;
+	search: SearchState;
+	selection: SelectionState;
+	session: SessionState;
+	settings: SettingsState;
+	trackPrompts: BasePromptState;
+	user: UserState;
+	userProfiles: UserProfilesState;
+};
 export type FetchedUserProfile = Readonly<{
 	followers: FollowerData;
 	followingArtists: FollowerData;
@@ -63588,7 +64079,6 @@ export type FetchUserProfileDataSuccessPayload = Readonly<{
 	reset?: boolean;
 	userId: number;
 } & (FetchUserProfileDataSuccessPayloadOthers | FetchUserProfileDataSuccessPayloadPlaylist)>;
-export type Gender = Gender;
 export type UpdateMetaValue = [
 	"email",
 	string
@@ -63605,10 +64095,6 @@ export type UpdateMetaValue = [
 	"profileName",
 	string
 ];
-export type Client = Client;
-export type Meta = Meta;
-export type Subscription = Subscription;
-export type OnboardingStepName = OnboardingStepName;
 export type OnboardingSteps = ReadonlyArray<{
 	key: OnboardingStepName;
 	value: "false" | "true";
@@ -63627,7 +64113,6 @@ export type Onboarding = {
 	loaded: boolean;
 	stepsShown: ReadonlyArray<OnboardingStepName>;
 };
-export type BasePrompt = BasePrompt;
 export type TrackPromptArtist = {
 	id: number;
 	name: string;
@@ -63652,13 +64137,9 @@ export type TrackPromptData = {
 	artists: Array<TrackPromptArtist>;
 	cover: string;
 };
-export type SettingsState = SettingsState;
-export type SettingsDesktop = SettingsDesktop;
-export type SettingsUrls = SettingsUrls;
 export type SettingsQuality = {
 	streaming: AudioQuality;
 };
-export type PartialSessionData = PartialSessionData;
 export type UTMParameters = {
 	banner?: string;
 	campaign: string;
@@ -63666,9 +64147,6 @@ export type UTMParameters = {
 	medium: string;
 	source: string;
 };
-export type SelectionItem = SelectionItem;
-export type SearchResultPayload = SearchResultPayload;
-export type ArtistRoleCategories = ArtistRoleCategories;
 export type PagedSearchResult<T> = {
 	readonly items: Array<T>;
 	readonly limit: number;
@@ -63709,8 +64187,6 @@ export type Route = {
 	result: Record<string, boolean | string>;
 	route: string;
 };
-export type PolicyState = PolicyState;
-export type PremiumOnlyFeature = PremiumOnlyFeature;
 export type SubscriptionBucket = {
 	minimumNumberOfInterruptions: number;
 	minimumSubscriptionDurationMonths: number;
@@ -63748,7 +64224,6 @@ export type RemoveAtIndexPayload = Readonly<{
 export type RemoveElementPayload = Readonly<{
 	uid: string;
 }>;
-export type MediaItems = MediaItems;
 export type LoadPlayQueueFromLocalStorageSuccessPayload = Readonly<{
 	currentIndex: number;
 	lastShuffleSeed?: number;
@@ -63774,7 +64249,6 @@ export type CloneTrackPayload = Readonly<{
 	fromIndex: number;
 	toIndex: number;
 }>;
-export type PlayQueueItem = PlayQueueItem;
 export type ResetPlayQueuePayload = Readonly<{
 	currentIndex?: number;
 	elements: ReadonlyArray<PlayQueueItem>;
@@ -63826,7 +64300,6 @@ export type UpdateOriginalSourcePayload = Readonly<{
 	context: PlayQueueContext;
 	mediaItemIds: ReadonlyArray<ItemId>;
 }>;
-export type ItemToBlock = ItemToBlock;
 export type FilterQueueOnAddItemToBlockPayload = Readonly<{
 	itemToBlock: ItemToBlock;
 	mediaItems: MediaItems;
@@ -63888,8 +64361,6 @@ export type PlayQueue = {
 	uniqueIdCounter: number;
 };
 export type PlayQueueType = "cloud" | "local";
-export type PlaylistFan = PlaylistFan;
-export type Player = Player;
 export type LocalPlaybackProgressPayload = Readonly<{
 	currentTime: number;
 	id: string;
@@ -63899,10 +64370,6 @@ export type PlaybackProgress = {
 	lastPlayed: Date;
 	playedMS: number;
 };
-export type PlaybackContext = PlaybackContext;
-export type EndReason = EndReason;
-export type PlaybackState = PlaybackState;
-export type StreamType = StreamType;
 export type MediaProductTransitionPayload = {
 	mediaProduct: MediaProduct;
 	playbackContext: PlaybackContext;
@@ -63916,19 +64383,9 @@ export type ShowCreditsPayload = {
 	itemId: ItemId;
 	itemType: ItemType;
 };
-export type Message = Message;
 export type Category = "MUTE" | "NETWORK" | "OTHER" | "PLAYBACK";
 export type Data = Record<string, any> | ServiceWorkerRegistration;
 export type Severity = "DEBUG" | "ERROR" | "INFO" | "WARN";
-export type AddAlbumSpec = AddAlbumSpec;
-export type AddMediaItemSpec = AddMediaItemSpec;
-export type AddMixSpec = AddMixSpec;
-export type AddPlaylistSpec = AddPlaylistSpec;
-export type AddToFolderSpec = AddToFolderSpec;
-export type ConfirmModal = ConfirmModal;
-export type CreatePlaylistModal = CreatePlaylistModal;
-export type CreateAiPlaylistModal = CreateAiPlaylistModal;
-export type FolderModal = FolderModal;
 export type UnblockItem = {
 	id: ItemId;
 	itemTitle: string;
@@ -63990,7 +64447,6 @@ export type LogoutModal = Readonly<{
 export type IntroUpgradeModal = Readonly<{
 	type: "INTRO_UPGRADE";
 }>;
-export type CreateNewFolderActions = CreateNewFolderActions;
 export type ExplicitToggleModal = Readonly<{
 	type: "EXPLICIT_TOGGLE_MODAL";
 }>;
@@ -64006,7 +64462,6 @@ export type DeviceDetectedModal = Readonly<{
 	deviceId: string;
 	type: "DEVICE_DETECTED";
 }>;
-export type CreateNewPlaylistActions = CreateNewPlaylistActions;
 export type ConfirmModalAdditionalValues = {
 	addToIndex?: number;
 	fromPlaylistUuid?: ItemId;
@@ -64039,13 +64494,8 @@ export type AddMultipleItemsToFolderModal = Readonly<{
 	type: "ADD_MULTIPLE_ITEMS_TO_FOLDER";
 }>;
 export type Modal = AddMultipleItemsToFolderModal | AddToFolderModal | AddToPlaylistModal | ArtistBioModal | ArtistsSelectionModal | ConfirmExitModal | ConfirmModal | CreateAiPlaylistModal | CreatePlaylistModal | DeviceDetectedModal | DolbyAtmos | EditPlaylistMetaModal | ExplicitToggleModal | FolderModal | IntroUpgradeModal | LogoutModal | OnboardingModal | OutputDeviceSettingsModal | PickAlbum | PickArtist | PickTrack | PlaylistInfoModal | ReleaseNotes | RemoteDesktopDisconnect | RestrictedAccessModal | Shortcuts | UnsupportedOS | Upsell | UserProfileOnboarding;
-export type Bundle = Bundle;
-export type InterruptionTrigger = InterruptionTrigger;
-export type Interruption = Interruption;
 export type AddItemsToInterruptionsQueuePayload = ReadonlyArray<Interruption>;
-export type MoveFolderItemsActions = MoveFolderItemsActions;
 export type FolderItemContext = "all" | "folder" | "page" | "sidebar";
-export type FolderItemList = FolderItemList;
 export type Sort = {
 	cursor?: string | null;
 	error?: string;
@@ -64056,9 +64506,6 @@ export type Sort = {
 export type FolderPlaylistData = Api.content.FolderPlaylistData & {
 	contentType: "folderPlaylist";
 };
-export type Flag = Flag;
-export type UserAttributes = UserAttributes;
-export type FlagRequests = FlagRequests;
 export type DataTypes = ValueOf<typeof dataTypes>;
 export type UserRequestAttribute = {
 	bool_value: boolean;
@@ -64087,57 +64534,20 @@ export type FlagResponse = {
 		type: string;
 	};
 };
-export type FavoritesState = FavoritesState;
-export type FavoritableItem = FavoritableItem;
 export type GetExperimentsResponse<T> = GetExperimentsResponse<T>;
-export type DefaultUserAttributes = DefaultUserAttributes;
 export type BaseActivateExperimentParams<T> = BaseActivateExperimentParams<T>;
-export type ActiveExperiments = ActiveExperiments;
-export type AddRemoveFavoritesPayload = AddRemoveFavoritesPayload;
 export type AddRemoveFavoritesRequiredProps = Omit<AddRemoveFavoritesPayload, "action" | "currentRoute" | "pageId" | "previousRoute">;
-export type DisplayPagePayload = DisplayPagePayload;
-export type ClickModulePayload = ClickModulePayload;
-export type ExpandCreditsPayload = ExpandCreditsPayload;
-export type BlockEventPayload = BlockEventPayload;
-export type OpenContextMenuPayload = OpenContextMenuPayload;
-export type CreateNewPlaylistPayload = CreateNewPlaylistPayload;
 export type CreateNewPlaylistRequiredProps = Omit<CreateNewPlaylistPayload, "contentId" | "currentRoute" | "pageId" | "previousRoute">;
-export type CreateNewFolderPayload = CreateNewFolderPayload;
 export type CreateNewFolderRequiredProps = Omit<CreateNewFolderPayload, "currentRoute" | "pageId" | "previousRoute">;
-export type RemoveFolderItemsPayload = RemoveFolderItemsPayload;
 export type RemoveFolderItemsRequiredProps = Omit<RemoveFolderItemsPayload, "currentRoute" | "pageId" | "previousRoute">;
-export type MoveFolderItemsPayload = MoveFolderItemsPayload;
 export type MoveFolderItemsRequiredProps = Omit<MoveFolderItemsPayload, "currentRoute" | "pageId" | "previousRoute">;
-export type ScrollPagePayload = ScrollPagePayload;
 export type ScrollPageRequiredProps = Omit<ScrollPagePayload, "currentRoute" | "pageId" | "previousRoute">;
-export type ChangeStreamQualityPayload = ChangeStreamQualityPayload;
-export type AdInterruptionsPayload = AdInterruptionsPayload;
-export type ButtonId = ButtonId;
-export type CommonContextMenu = CommonContextMenu;
-export type CommonContextMenuWithId = CommonContextMenuWithId;
-export type CommonContextMenuWithTrn = CommonContextMenuWithTrn;
-export type TrackPromptContextMenu = TrackPromptContextMenu;
-export type MediaItemContextMenu = MediaItemContextMenu;
-export type BlockItemContextMenu = BlockItemContextMenu;
-export type MultiMediaItemContextMenu = MultiMediaItemContextMenu;
-export type InputFieldClipboardContextMenu = InputFieldClipboardContextMenu;
-export type EmptyFolderContextMenu = EmptyFolderContextMenu;
 export type ItemsPageListType = "album" | "artist" | "mediaItems" | "mix" | "playlist";
-export type Album = Album;
-export type Artist = Artist;
-export type Mix = Mix;
-export type Playlist = Playlist;
-export type NormalizedDynamicPage = NormalizedDynamicPage;
-export type Credits = Credits;
-export type StoredSortOrders = StoredSortOrders;
-export type MixedTypesListItemsPayload = MixedTypesListItemsPayload;
-export type TrackListEntityType = TrackListEntityType;
 export type LoadFavoriteMediaItemPayload = {
 	orderBy?: SortOrder;
 	orderDirection?: SortDirection | null;
 	reset?: boolean | null;
 };
-export type ResponseContentItem = ResponseContentItem;
 export type CreditContributor = {
 	id?: number;
 	name: string;
@@ -64183,10 +64593,8 @@ export type TrackListItemsFields = {
 export type TrackLists = im.Map<string, TrackListItems>;
 export type AlbumReviews = im.Map<string, Api.content.AlbumReview>;
 export type Albums = im.Map<string, Album>;
-export type Article = Article;
 export type Articles = im.Map<string, Article>;
 export type ArtistBios = im.Map<string, Api.content.ArtistBio>;
-export type ArtistContributions = ArtistContributions;
 export type ArtistContributionsMap = im.Map<string, im.Map<string, ArtistContributions>>;
 export type Artists = im.Map<string, Artist>;
 export type DateAddedMap = im.Map<string, string>;
@@ -64200,7 +64608,6 @@ export type FavoritesFields = {
 	video: Favorite;
 };
 export type Favorites = RecordOf<FavoritesFields>;
-export type Folder = Folder;
 export type Folders = im.Map<string, Folder>;
 export type LyricsStatus = "loaded" | "loading" | "missing" | "unfetched";
 export type ItemLyrics = Readonly<{
@@ -64234,7 +64641,6 @@ export type Playlists = im.Map<string, Playlist>;
 export type TrackContributors = im.Map<string, Credits>;
 export type TrackMixIds = im.Map<string, string>;
 export type VideoContributors = im.Map<string, Credits>;
-export type PlaylistMeta = PlaylistMeta;
 export type TrackItem = Api.content.TrackItem & {
 	readonly contentType: "track";
 };
@@ -64242,11 +64648,6 @@ export type VideoItem = Api.content.VideoItem & {
 	readonly contentType: "video";
 	readonly credits?: Credits;
 };
-export type Track = Track;
-export type Video = Video;
-export type DynamicPageHeaderPlaybackControls = DynamicPageHeaderPlaybackControls;
-export type DynamicPagePromotionItem = DynamicPagePromotionItem;
-export type DynamicPageSocialPlatformItem = DynamicPageSocialPlatformItem;
 export type NormalizedSocialModule = Omit<Api.dp.SocialModule, "socialLinks"> & {
 	socialLinks: im.List<DynamicPageSocialPlatformItem>;
 };
@@ -64261,11 +64662,9 @@ export type NormalizedFeaturePromotionsModule = Omit<Api.dp.FeaturePromotionsMod
 };
 export type NormalizedMiscModules = Api.dp.GenreHeaderModule | Api.dp.HighlightsModule | NormalizedFeaturePromotionsModule | NormalizedMultipleTopPromotionsModule | NormalizedSingleTopPromotionModule | NormalizedSocialModule;
 export type NormalizedVideoListModule = NormalizedListModuleUtil<Api.dp.VideoListModule, Video>;
-export type TrackWithRoles = TrackWithRoles;
 export type NormalizedTrackListWithRolesModule = NormalizedListModuleUtil<Api.dp.TrackListWithRolesModule, TrackWithRoles>;
 export type NormalizedTrackListModule = NormalizedListModuleUtil<Api.dp.TrackListModule, Track>;
 export type NormalizedPlaylistListModule = NormalizedListModuleUtil<Api.dp.PlaylistListModule, Playlist>;
-export type DynamicPagePageLinksItem = DynamicPagePageLinksItem;
 export type NormalizedPageLinksModule = NormalizedListModuleUtil<Api.dp.PageLinksModule, DynamicPagePageLinksItem>;
 export type NormalizedPageLinksCloudModule = NormalizedListModuleUtil<Api.dp.PageLinksCloudModule, DynamicPagePageLinksItem>;
 export type NormalizedMixListModule = NormalizedListModuleUtil<Api.dp.MixListModule, Mix>;
@@ -64318,13 +64717,6 @@ export type DynamicPageModuleHeaderProps = Api.dp.ListHeader;
 export type DynamicPageCollectionLayout = Api.dp.Layout;
 export type ListFormat = Api.dp.ListFormat;
 export type DynamicPageListStyle = Api.dp.PlaylistStyle;
-export type CloudQueueItem = CloudQueueItem;
-export type CloudQueueProperties = CloudQueueProperties;
-export type CloudQueueRepeatMode = CloudQueueRepeatMode;
-export type CloudQueueAddItemMode = CloudQueueAddItemMode;
-export type DeviceMode = DeviceMode;
-export type BoomboxError = BoomboxError;
-export type NativePlayerDeviceMode = NativePlayerDeviceMode;
 export type BlockedUserItem = {
 	color: Array<string>;
 	name: string;
@@ -64333,7 +64725,6 @@ export type BlockedUserItem = {
 	} | null;
 	userId: ItemId;
 };
-export type BlockedArtist = BlockedArtist;
 export type BlockedUser = {
 	item: BlockedUserItem;
 	type: "USER";
@@ -64344,7 +64735,6 @@ export type BlockedLists = Readonly<{
 	users: ReadonlyArray<ItemId>;
 	videos: ReadonlyArray<ItemId>;
 }>;
-export type ListType = ListType;
 export type LoadPersistentBlockedListSuccessPayload = {
 	items: ReadonlyArray<BlockedArtist>;
 	listType: "artists";
@@ -64379,7 +64769,6 @@ export type PersistentUserList = PersistentListCommon & {
 export type PersistentVideoList = PersistentListCommon & {
 	readonly items: ReadonlyArray<Video>;
 };
-export type FavoritableItemType = FavoritableItemType;
 export type Parent = Readonly<{
 	id: string;
 	name: string;
@@ -64391,10 +64780,6 @@ export type ItemsFields = {
 	totalNumberOfItems: number;
 };
 export type ReactElement = import("react").ReactElement;
-export type ClickModuleContexts = ClickModuleContexts;
-export type SourceIdContextValue = SourceIdContextValue;
-export type MediaCollectionContextType = MediaCollectionContextType;
-export type SelectionItems = SelectionItems;
 export interface ActionTypes {
 	"view/LEAVE_PORTAL": void;
 	"view/ENTERED_NOWPLAYING": void;
@@ -65303,14 +65688,7 @@ export interface ActionTypes {
 		albumId: ItemId;
 		playlistUUID: ItemId;
 	};
-	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST": {
-		addToIndex?: number;
-		mediaItemIdsToAdd: Array<ItemId>;
-		onArtifactNotFound?: 'ADD' | 'FAIL' | 'SKIP';
-		onDupes: 'ADD' | 'FAIL' | 'SKIP';
-		playlistUUID: ItemId;
-		showNotification?: boolean;
-	};
+	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST": void;
 	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST_FAIL": void;
 	"content/LOAD_PLAYLIST": {
 		playlistUUID: ItemId;
