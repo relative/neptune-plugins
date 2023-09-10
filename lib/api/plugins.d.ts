@@ -1,7 +1,7 @@
 import type { store } from 'voby'
 import type { createPersistentObject } from './utils'
 
-export const [pluginStore, pluginStoreReady]: ReturnType<typeof createPersistentObject>
+export const [pluginStore, pluginStoreReady]: ReturnType<typeof createPersistentObject<Plugin>>
 
 export const enabled: ReturnType<typeof store>
 
