@@ -11,7 +11,6 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
     "incremental": true,
     "plugins": [],
     "paths": {
@@ -22,7 +21,10 @@
       "@neptune/plugins": ["./lib/api/plugins.d.ts"],
       "@neptune/components": ["./lib/ui/components.d.ts"],
       "@neptune": ["./lib/neptune.d.ts"]
-    }
+    },
+
+    "jsx": "react-jsx",
+    "jsxImportSource": "@relative/util"
   },
   "include": ["./**/*.ts"],
   "files": ["./lib/env.d.ts"]

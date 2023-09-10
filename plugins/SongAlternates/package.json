@@ -1,0 +1,12 @@
+{
+  "name": "neptune-plugin-song-alternates",
+  "displayName": "Song Alternates",
+  "description": "Replace tracks in playlists from the context menu",
+  "version": "0.0.0",
+  "author": "relative <hi@relative.im>",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "@relative/util": "workspace:^"
+  }
+}
