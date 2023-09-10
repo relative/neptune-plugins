@@ -1,5 +1,3 @@
 {
-  "yaml.schemas": {
-    "https://json.schemastore.org/github-workflow.json": "file:///c%3A/dev/neptune-plugins/.github/workflows/deploy.yml"
-  }
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }

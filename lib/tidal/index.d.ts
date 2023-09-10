@@ -65303,7 +65303,14 @@ export interface ActionTypes {
 		albumId: ItemId;
 		playlistUUID: ItemId;
 	};
-	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST": void;
+	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST": {
+		addToIndex?: number;
+		mediaItemIdsToAdd: Array<ItemId>;
+		onArtifactNotFound?: 'ADD' | 'FAIL' | 'SKIP';
+		onDupes: 'ADD' | 'FAIL' | 'SKIP';
+		playlistUUID: ItemId;
+		showNotification?: boolean;
+	};
 	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST_FAIL": void;
 	"content/LOAD_PLAYLIST": {
 		playlistUUID: ItemId;
