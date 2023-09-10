@@ -10,8 +10,8 @@ import { registerRoute } from './api/registerRoute'
 import { registerTab } from './api/registerTab'
 import { showModal } from './api/showModal'
 import { Store } from 'redux'
-import { NeptuneDispatchers } from './tidal/index'
-const store: Store
+import { CoreState, NeptuneDispatchers } from './tidal/index'
+const store: Store<CoreState>
 
 const actions: NeptuneDispatchers
 const modules: Array<{
