@@ -10,6 +10,8 @@ import {
   pluginManifests,
   buildManifestPath,
   esbuildPluginNeptunePlugin,
+  DEV_SETTINGS,
+  entryPoints,
 } from './esbuild-plugin-neptune-plugin.mjs'
 import { esbuildPluginProblemMatcher } from './esbuild-plugin-problem-matcher.mjs'
 
@@ -43,11 +45,6 @@ async function readJsonFile(p, encoding = 'utf8') {
  * @returns {string}
  */
 const forcePathToUnix = p => (path.win32 === path ? path.posix.format(path.parse(p)) : p)
-
-/**
- * @type {string[]}
- */
-const entryPoints = []
 
 for (const ent of await fs.readdir(PLUGINS_DIR, { withFileTypes: true })) {
   if (!ent.isDirectory()) continue
@@ -123,7 +120,10 @@ const ctx = await esbuild.context({
 })
 
 if (options.watch) {
+  await ctx.watch()
   const { host, port } = await ctx.serve({})
+  DEV_SETTINGS.host = host
+  DEV_SETTINGS.port = port
 } else {
   const result = await ctx.rebuild()
   void (await Promise.all(
