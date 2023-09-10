@@ -14,6 +14,11 @@ import { NeptuneDispatchers } from './tidal/index'
 const store: Store
 
 const actions: NeptuneDispatchers
+const modules: Array<{
+  id: string
+  loaded: boolean
+  exports: any
+}>
 export interface NeptuneObject {
   patcher: typeof patcher
   utils: typeof utils
@@ -28,6 +33,7 @@ export interface NeptuneObject {
   components: typeof components
   store: typeof store
   actions: NeptuneDispatchers
+  modules: typeof modules
 }
 export {
   patcher,
@@ -43,4 +49,5 @@ export {
   components,
   store,
   actions,
+  modules,
 }
