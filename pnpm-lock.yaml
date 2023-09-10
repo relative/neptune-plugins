@@ -14,15 +14,24 @@ importers:
       idb-keyval:
         specifier: ^6.2.1
         version: 6.2.1
+      immutable:
+        specifier: 5.0.0-beta.4
+        version: 5.0.0-beta.4
       redux:
         specifier: ^4.2.1
         version: 4.2.1
       spitroast:
         specifier: ^1.4.3
         version: 1.4.3
+      type-fest:
+        specifier: ^4.3.1
+        version: 4.3.1
       voby:
         specifier: ^0.54.0
         version: 0.54.0
+      zod:
+        specifier: ^3.22.2
+        version: 3.22.2
 
   plugins/VolumeScroll: {}
 
@@ -271,6 +280,10 @@ packages:
     resolution: {integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==}
     dev: true
 
+  /immutable@5.0.0-beta.4:
+    resolution: {integrity: sha512-sl9RE3lqd2LoQSESc8VV0k8qE9y57iT7dinq3Q+8mR2dqReHDZlgUrudzmFfZhDXBLXlNJMVWv3SG1YpQIokig==}
+    dev: true
+
   /oby@14.3.1:
     resolution: {integrity: sha512-/5BvIarE2epsV2DDjcBf6R7DvcoUqtU62AOEEQyUqaKzwz0kdpB6huOG8anaqU0Asa9UGPFxdQWVbUPpEGLkuw==}
     dev: true
@@ -289,9 +302,18 @@ packages:
     resolution: {integrity: sha512-JdkzAy2tT82ahx+eEtM5ohBeHICqFln/Yzo+vPGnE5sX1LYgPHCU2qcaSIJfR/xNrhI0q+ftwFz0H2aJysv3EA==}
     dev: true
 
+  /type-fest@4.3.1:
+    resolution: {integrity: sha512-pphNW/msgOUSkJbH58x8sqpq8uQj6b0ZKGxEsLKMUnGorRcDjrUaLS+39+/ub41JNTwrrMyJcUB8+YZs3mbwqw==}
+    engines: {node: '>=16'}
+    dev: true
+
   /voby@0.54.0:
     resolution: {integrity: sha512-hH8LXcP0QR4J6nnzfSWGD13onq7hqdc/ya1r1Bb+TxibtECYKZRO1m4HdSU4RcE7MdAaQwR5pwgd+hqXCqk2OA==}
     dependencies:
       htm: 3.1.1
       oby: 14.3.1
+    dev: true
+
+  /zod@3.22.2:
+    resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
     dev: true

@@ -1,3 +1,26 @@
+import type { ActionTypes } from '../tidal'
 export type UninterceptFunction = () => void
-export function intercept(type: string, cb: CallableFunction, once? = false): UninterceptFunction
-export function intercept(types: string[], cb: CallableFunction, once? = false): UninterceptFunction
+
+export type ActionType = keyof ActionTypes
+
+export type PayloadActionTypeTuple<AT extends ActionType> = [ActionTypes[AT], AT]
+export type CallbackFunction<ForActionTypes extends ActionType> =
+  /**
+   * @returns anything else to continue
+   * @returns `false` to cancel dispatch
+   */
+  <AT extends ForActionTypes>([payload, at]: PayloadActionTypeTuple<AT>) => false | void
+
+/**
+ * intercept redux events
+ */
+export function intercept<AT extends ActionType>(type: AT, cb: CallbackFunction<AT>, once = false): UninterceptFunction
+// /**
+//  * dont use this signature
+//  * @deprecated
+//  */
+// export function intercept<AT extends ActionType>(
+//   types: AT[],
+//   cb: CallbackFunction<AT>,
+//   once = false
+// ): UninterceptFunction

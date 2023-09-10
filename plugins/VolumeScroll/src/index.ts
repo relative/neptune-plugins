@@ -1,4 +1,4 @@
-import { store } from '@neptune'
+import { actions, intercept, store } from '@neptune'
 
 import { ELEMENT, VOLUME_INTERVAL, VOLUME_INTERVAL_SHIFT } from './constants'
 
@@ -19,12 +19,8 @@ function wheelListener(e: WheelEvent) {
   const volumeInterval = e.shiftKey ? VOLUME_INTERVAL_SHIFT : VOLUME_INTERVAL
   const volumeMult = e.deltaY > 0 ? -1 : 1
   const newVolume = volume + volumeInterval * volumeMult
-
-  store.dispatch({
-    type: 'playbackControls/SET_VOLUME',
-    payload: {
-      volume: clamp(newVolume),
-    },
+  actions.playbackControls.setVolume({
+    volume: clamp(newVolume),
   })
 }
 
