@@ -1,4 +1,4 @@
-import type { ActionTypes } from '@tidal'
+import type { ActionTypes } from 'neptune-types/tidal'
 import { promiseTimeout } from '../util'
 import { intercept } from '@neptune'
 
@@ -56,7 +56,7 @@ export function take<AT extends keyof ActionTypes>(
               else sc = shouldCancel(o)
             }
             resolve(o)
-            return !sc
+            if (sc === true) return true
           })
         )
       }
