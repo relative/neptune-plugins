@@ -1,4 +1,4 @@
-import { findReactModule } from './hooks/react'
+import React from './modules/react'
 
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
@@ -39,7 +39,7 @@ export function jsx(type: any, config: any, maybeKey?: string) {
     for (const propName in defaultProps) if (props[propName] === undefined) props[propName] = defaultProps[propName]
   }
 
-  return findReactModule().createElement(type, props, children)
+  return React.createElement(type, props, children)
 }
 export const jsxs = jsx
-export const Fragment = findReactModule().Fragment
+export const Fragment = React.Fragment
