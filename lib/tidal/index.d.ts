@@ -65024,7 +65024,9 @@ export interface ActionTypes {
 	"settings/TOGGLE_CLOSE_TO_TRAY": void;
 	"settings/TOGGLE_NORMALIZATION": void;
 	"settings/WEB_UPDATE_AVAILABLE": void;
-	"session/CLEAR_SESSION": void;
+	"session/CLEAR_SESSION": {
+		shouldReload: boolean;
+	};
 	"session/LOGIN_VIA_TOKEN": {
 		token: string;
 	};
@@ -65053,9 +65055,15 @@ export interface ActionTypes {
 	};
 	"session/FACEBOOK_DEAUTHORIZED": void;
 	"session/OAUTH_HANDOVER": void;
-	"session/OAUTH_LOGIN": void;
+	"session/OAUTH_LOGIN": {
+		path: string;
+		queryParams: Record<string, string>;
+	};
 	"session/OAUTH_SIGNUP": void;
-	"session/REFRESH_USER_SESSION": void;
+	"session/REFRESH_USER_SESSION": {
+		session: PartialSessionData;
+		shouldReload: boolean;
+	};
 	"session/RESTORE_AND_REFRESH_USER_SESSION": void;
 	"session/START_POLLING": void;
 	"session/STOP_POLLING": void;
@@ -65118,7 +65126,10 @@ export interface ActionTypes {
 	"search/SEARCH_COMMIT": string;
 	"router/PUSH": void;
 	"router/REPLACE": void;
-	"router/OPEN_EXTERNAL_URL": void;
+	"router/OPEN_EXTERNAL_URL": {
+		openInNewWindow: boolean;
+		url: string;
+	};
 	"policy/SET_POLICIES": Partial<PolicyState>;
 	"policy/LOAD_POLICIES": void;
 	"policy/VALIDATE_AND_RUN": {
@@ -65489,7 +65500,10 @@ export interface ActionTypes {
 	"eventTracking/REMOVE_FOLDER_ITEMS": RemoveFolderItemsRequiredProps;
 	"eventTracking/MOVE_FOLDER_ITEMS": MoveFolderItemsRequiredProps;
 	"eventTracking/SCROLL_PAGE": ScrollPageRequiredProps;
-	"eventTracking/ADD_REMOVE_FAVORITES": void;
+	"eventTracking/ADD_REMOVE_FAVORITES": Omit<
+  	AddRemoveFavoritesPayload,
+  	'action' | 'currentRoute' | 'pageId' | 'previousRoute'
+	>;
 	"eventTracking/CHANGE_STREAM_QUALITY": ChangeStreamQualityPayload;
 	"eventTracking/AD_INTERRUPTIONS": AdInterruptionsPayload;
 	"eventTracking/CONTROL_CLICKS_PLAYNOW": {
@@ -65688,7 +65702,14 @@ export interface ActionTypes {
 		albumId: ItemId;
 		playlistUUID: ItemId;
 	};
-	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST": void;
+	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST": {
+		addToIndex?: number;
+		mediaItemIdsToAdd: Array<ItemId>;
+		onArtifactNotFound?: 'ADD' | 'FAIL' | 'SKIP';
+		onDupes: 'ADD' | 'FAIL' | 'SKIP';
+		playlistUUID: ItemId;
+		showNotification?: boolean;
+	};
 	"content/ADD_MEDIA_ITEMS_TO_PLAYLIST_FAIL": void;
 	"content/LOAD_PLAYLIST": {
 		playlistUUID: ItemId;
@@ -65823,7 +65844,11 @@ export interface ActionTypes {
 		playlistUUID: ItemId;
 	};
 	"content/CLEAR_PLAYLIST_LISTS_FILTER_DATA": void;
-	"mix/PLAY_MIX": void;
+	"mix/PLAY_MIX": {
+		forceShuffle: boolean;
+		fromIndex: number;
+		mixId: ItemId;
+	};
 	"mix/ADD_MIX_TO_PLAYLIST": {
 		mixId: ItemId;
 		playlistUUID: ItemId;
