@@ -1,4 +1,4 @@
-import type { NeptuneObject } from './windowObject'
+import type { NeptuneObject } from './neptune'
 
 declare global {
   const neptune: NeptuneObject
