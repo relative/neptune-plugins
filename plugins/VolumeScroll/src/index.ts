@@ -1,4 +1,4 @@
-import { actions, intercept, store } from '@neptune'
+import { actions, store } from '@neptune'
 
 import { ELEMENT, VOLUME_INTERVAL, VOLUME_INTERVAL_SHIFT } from './constants'
 

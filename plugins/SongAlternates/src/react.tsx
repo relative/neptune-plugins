@@ -1,7 +1,7 @@
 import React from '@relative/util/modules/react'
 import { unints } from './state'
 
-import type { ItemId } from '@tidal'
+import type { ItemId } from 'neptune-types/tidal'
 import { actions } from '@neptune'
 
 import { isActionType, take } from '@relative/util/state/take'

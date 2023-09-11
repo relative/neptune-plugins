@@ -1,32 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "incremental": true,
-    "plugins": [],
     "paths": {
-      "~/*": ["./src/*"],
-      "@neptune/utils": ["./lib/api/utils.d.ts"],
-      "@neptune/patcher": ["./node_modules/spitroast"],
-      "@neptune/voby": ["./node_modules/voby"],
-      "@neptune/plugins": ["./lib/api/plugins.d.ts"],
-      "@neptune/components": ["./lib/ui/components.d.ts"],
-      "@neptune": ["./lib/neptune.d.ts"],
-      "@tidal": ["./lib/tidal/index.d.ts"]
+      "~/*": ["./src/*"]
     },
-
     "jsx": "react-jsx",
     "jsxImportSource": "@relative/util"
-  }
-  // "include": ["./**/*.ts"],
-  // "files": ["./lib/env.d.ts"]
+  },
+  "extends": "neptune-types/tsconfig.base.json"
 }

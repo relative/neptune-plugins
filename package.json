@@ -14,15 +14,9 @@
   "devDependencies": {
     "@types/react": "18.2.0",
     "esbuild": "0.19.2",
-    "idb-keyval": "^6.2.1",
-    "immutable": "5.0.0-beta.4",
-    "redux": "^4.2.1",
-    "spitroast": "^1.4.3",
+    "neptune-types": "^1.0.0",
     "ts-patch": "^3.0.2",
-    "type-fest": "^4.3.1",
-    "typescript": "^5.2.2",
-    "voby": "^0.54.0",
-    "zod": "^3.22.2"
+    "typescript": "^5.2.2"
   },
   "prettier": {
     "semi": false,
