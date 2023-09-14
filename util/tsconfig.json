@@ -1,3 +1,9 @@
 {
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./*"]
+    },
+    "jsxImportSource": "~/"
+  },
   "extends": "../tsconfig.base.json"
 }
