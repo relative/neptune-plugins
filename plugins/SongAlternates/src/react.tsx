@@ -73,13 +73,7 @@ unints.push(
             const searchPhrase = props.mediaItem?.item?.title + ' ' + props.mediaItem?.item?.artist?.name
 
             actions.modal.showPickTrackModal({ promptId: 666, userId: 666 })
-            actions.search.searchTrackForTrackPicker({
-              limit: 10,
-              searchPhrase,
-            })
-
-            // There is a bug in tidal code where the track picker modal tries using a non uri-encoded searchPhrase to pull search results
-            actions.trackPrompts.setTrackSearchPhrase(encodeURIComponent(searchPhrase))
+            actions.trackPrompts.setTrackSearchPhrase(searchPhrase)
 
             const ret = await take(['trackPrompts/SET_TRACK_FOR_PROMPT', 'modal/CLOSE'], 0, [
               'trackPrompts/SET_TRACK_FOR_PROMPT',
